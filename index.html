@@ -127,10 +127,11 @@
 "use strict";
 
 const CFG = {
-  smokeStart: 18,          // מד עשן התחלתי (0..100)
-  riseBase: 8.5,           // עלייה בסיסית ליחידה/שנייה
-  riseQuad: 0.12,          // העשן מתגבר בריבוע: קצב = base + quad*t²  (מטפס מהר יותר)
-  fanPower: 2.3,           // כמה כל נפנוף מוריד מהמד
+  smokeStart: 12,          // מד עשן התחלתי (0..100)
+  riseBase: 6.5,           // עלייה בסיסית ליחידה/שנייה בהתחלה
+  riseLinear: 0.42,        // תוספת ליניארית ליחידה/שנייה — קצב = base + linear*t (חלק, זורם)
+  riseQuad: 0,             // מבוטל — אין קפיצה חדה
+  fanPower: 3.0,           // כמה כל נפנוף מוריד מהמד (חזק יותר → אפשר לדחוף למטה)
   fanMinGap: 0.04,         // מרווח מינימלי בין נפנופים שנספרים (שנ')
   winTime: 82,             // שרדת עד כאן = ניצחת (כמעט בלתי אפשרי עכשיו)
 };
@@ -272,7 +273,8 @@ let embers = [], smoke = [], bursts = [], pops = [];
 let lastRun = null;
 
 const songTime = () => useAudioEl ? songEl.currentTime : (performance.now()-synthStart)/1000;
-const riseRate = () => CFG.riseBase + CFG.riseQuad*elapsed*elapsed;   // "בריבוע"
+// עקומה חלקה: לינארית בעיקר, עם קורטוב ריבוע (אם מוגדר) — לא מתפוצץ פתאום
+const riseRate = () => CFG.riseBase + CFG.riseLinear*elapsed + CFG.riseQuad*elapsed*elapsed;
 
 function resize(){
   dpr = Math.min(window.devicePixelRatio||1, 2);
