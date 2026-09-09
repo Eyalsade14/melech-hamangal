@@ -851,15 +851,22 @@ function frame(ts){
 requestAnimationFrame(frame);
 
 // ===== input =====
+// מגביל למקסימום 2 אצבעות פעילות בו־זמנית
+const activePointers = new Set();
 cv.addEventListener('pointerdown', e => {
   if (state!=='play') return;
+  if (activePointers.size >= 2) return;   // חוסם אצבע שלישית ומעלה
+  activePointers.add(e.pointerId);
   const rect = cv.getBoundingClientRect();
   const x = e.clientX - rect.left, y = e.clientY - rect.top;
   const dir = x < W/2 ? -1 : 1;
-  // רק בחלק התחתון של המסך (מתחת לדמות) — הריפל הוא חיווי שלוחצים שם
   if (y > H*0.60) ripples.push({ x, y, r0: 14, grow: 110, life: 1 });
   doFan(dir);
 });
+const clearPointer = e => activePointers.delete(e.pointerId);
+cv.addEventListener('pointerup', clearPointer);
+cv.addEventListener('pointercancel', clearPointer);
+cv.addEventListener('pointerleave', clearPointer);
 $('app').addEventListener('touchstart', e => { if (state==='play') e.preventDefault(); }, {passive:false});
 let kbToggle = 1;
 window.addEventListener('keydown', e => {
