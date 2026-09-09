@@ -799,23 +799,9 @@ function drawPad(cx, cy, r, dir, pulse){
   pg.addColorStop(1, `rgba(255,255,255,${0.04+pulse*0.06})`);
   ctx.fillStyle = pg;
   ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
-  ctx.strokeStyle = `rgba(255,255,255,${0.28+pulse*0.4})`;
+  ctx.strokeStyle = `rgba(255,255,255,${0.32+pulse*0.4})`;
   ctx.lineWidth = 2;
   ctx.stroke();
-  // חץ בכיוון הנפנוף
-  ctx.fillStyle = `rgba(255,240,220,${0.80+pulse*0.20})`;
-  ctx.beginPath();
-  const a = r*0.45;
-  if (dir < 0){
-    ctx.moveTo(cx+a*0.35, cy-a);
-    ctx.lineTo(cx-a*0.55, cy);
-    ctx.lineTo(cx+a*0.35, cy+a);
-  } else {
-    ctx.moveTo(cx-a*0.35, cy-a);
-    ctx.lineTo(cx+a*0.55, cy);
-    ctx.lineTo(cx-a*0.35, cy+a);
-  }
-  ctx.closePath(); ctx.fill();
   ctx.restore();
 }
 function frame(ts){
