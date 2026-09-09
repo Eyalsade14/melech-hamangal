@@ -127,8 +127,8 @@
 "use strict";
 
 const CFG = {
-  smokeStart: 18,          // מד עשן התחלתי (0..100)
-  riseBase: 15,            // עלייה בסיסית ליחידה/שנייה בהתחלה (=כמו שניה 20 בעבר)
+  smokeStart: 22,          // מד עשן התחלתי (0..100)
+  riseBase: 18.5,          // עלייה בסיסית ליחידה/שנייה בהתחלה (=כמו שנייה 8 בעבר)
   riseLinear: 0.42,        // תוספת ליניארית ליחידה/שנייה — קצב = base + linear*t (חלק, זורם)
   riseQuad: 0,             // מבוטל — אין קפיצה חדה
   fanPower: 3.0,           // כמה כל נפנוף מוריד מהמד (חזק יותר → אפשר לדחוף למטה)
@@ -763,14 +763,27 @@ function render(){
   if (state==='play') { drawMeter(); drawPads(); }
 }
 
-// פידבק לחיצה — טבעות עדינות בגוון אדום/כתום, מופיעות רק בחצי התחתון
+// פידבק לחיצה — טבעות אדומות (בלי צהוב), מופיעות רק בחלק התחתון
 function drawPads(){
   for (const r of ripples){
     const a = Math.max(0, r.life);
     const rad = r.r0 + (1-a)*r.grow;
+    // הילה אדומה רכה
+    const gg = ctx.createRadialGradient(r.x, r.y, rad*0.3, r.x, r.y, rad*1.1);
+    gg.addColorStop(0, `rgba(230,60,45,${a*0.25})`);
+    gg.addColorStop(1, 'rgba(230,60,45,0)');
+    ctx.fillStyle = gg;
+    ctx.beginPath(); ctx.arc(r.x, r.y, rad*1.1, 0, Math.PI*2); ctx.fill();
+    // טבעת חיצונית
     ctx.beginPath();
     ctx.arc(r.x, r.y, rad, 0, Math.PI*2);
-    ctx.strokeStyle = `rgba(230,80,55,${a*0.55})`;
+    ctx.strokeStyle = `rgba(240,80,55,${a*0.85})`;
+    ctx.lineWidth = 3.5;
+    ctx.stroke();
+    // טבעת פנימית
+    ctx.beginPath();
+    ctx.arc(r.x, r.y, rad*0.55, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(255,110,80,${a*0.7})`;
     ctx.lineWidth = 2;
     ctx.stroke();
   }
@@ -791,7 +804,7 @@ cv.addEventListener('pointerdown', e => {
   const x = e.clientX - rect.left, y = e.clientY - rect.top;
   const dir = x < W/2 ? -1 : 1;
   // רק בחלק התחתון של המסך (מתחת לדמות) — הריפל הוא חיווי שלוחצים שם
-  if (y > H*0.60) ripples.push({ x, y, r0: 10, grow: 70, life: 1 });
+  if (y > H*0.60) ripples.push({ x, y, r0: 14, grow: 110, life: 1 });
   doFan(dir);
 });
 $('app').addEventListener('touchstart', e => { if (state==='play') e.preventDefault(); }, {passive:false});
