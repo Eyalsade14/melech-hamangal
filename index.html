@@ -98,8 +98,7 @@
     </div>
     <div class="row">
       <button class="btn" id="againBtn">עוד סיבוב</button>
-      <button class="btn ghost" id="waBtn">שתף בוואטסאפ</button>
-      <button class="btn ghost" id="imgBtn">הורד תמונה</button>
+      <button class="btn ghost" id="imgBtn">שתף חברים</button>
     </div>
   </div>
 
@@ -107,7 +106,8 @@
     <div class="sub">לחיצה ארוכה על התמונה כדי לשמור, או "הורד"</div>
     <img id="imgModalImg" alt="כרטיס תוצאה">
     <div class="row">
-      <a class="btn" id="imgDownload" download="melech-hamangal.png">הורד</a>
+      <a class="btn" id="imgDownload" download="melech-hamangal.png">הורד תמונה</a>
+      <a class="btn ghost" id="imgWa" target="_blank" rel="noopener">שלח בוואטסאפ</a>
       <button class="btn ghost" id="imgClose">סגור</button>
     </div>
   </div>
@@ -905,9 +905,8 @@ function shareText(){
   return 'שיחקתי מלך המנגל 💨 שרדתי '+r.seconds+' שניות מול העשן ('+r.score.toLocaleString('he-IL')+
          ' נק\', "'+r.rank+'"). כמה אתה תחזיק? '+location.href;
 }
-$('waBtn').addEventListener('click', () => {
-  window.open('https://wa.me/?text='+encodeURIComponent(shareText()), '_blank');
-});
+// כפתור אחד: מייצר תמונה ופותח share sheet (בו יש וואטסאפ) על מובייל,
+// ובדסקטופ מציג מודל להורדה + לינק וואטסאפ.
 $('imgBtn').addEventListener('click', makeCard);
 $('imgClose').addEventListener('click', () => { $('imgModal').hidden = true; });
 
@@ -942,7 +941,9 @@ function makeCard(){
       try { await navigator.share({files:[file], text: shareText()}); return; } catch(e){}
     }
     const url = URL.createObjectURL(blob);
-    $('imgModalImg').src = url; $('imgDownload').href = url; $('imgModal').hidden = false;
+    $('imgModalImg').src = url; $('imgDownload').href = url;
+    $('imgWa').href = 'https://wa.me/?text='+encodeURIComponent(shareText());
+    $('imgModal').hidden = false;
   }, 'image/png');
 }
 function wrap(c,text,cx,y,maxW,lh){
