@@ -54,7 +54,9 @@
   /* פסי מותג ESCOPIC — סגול־אינדיגו */
   #promo{margin-top:4px; padding:16px 22px; border-radius:16px; max-width:440px; text-align:center; line-height:1.55;
     background:linear-gradient(180deg, rgba(108,92,231,.28), rgba(60,44,160,.35)); border:1px solid rgba(140,120,255,.55);
-    box-shadow:0 6px 24px rgba(0,0,0,.35);}
+    box-shadow:0 6px 24px rgba(0,0,0,.35);
+    opacity:0; transform:translateY(14px) scale(.94); transition:opacity .45s ease, transform .45s cubic-bezier(.2,.9,.3,1.3);}
+  #promo.show{opacity:1; transform:translateY(0) scale(1);}
   #promo .big{font-size:clamp(16px,4.8vw,21px); font-weight:900; margin-bottom:2px; color:#efeaff;}
   #promo .sm{font-size:clamp(13px,3.8vw,16px); opacity:.92; color:#dcd6ff;}
   #promo b{color:#b5a5ff; letter-spacing:.5px;}
@@ -861,7 +863,10 @@ function endGame(won){
   if (!b || fs2 > b.score) setBest({score:fs2, rank});
   showBest();
   lastRun = {score:fs2, rank, won, seconds:Math.floor(elapsed), fans};
+  const promo = $('promo');
+  promo.classList.remove('show');            // מסתירים בהתחלה
   endScreen.hidden = false;
+  setTimeout(() => promo.classList.add('show'), 2000);   // קופץ פנימה אחרי 2 שניות
 }
 
 // ===== share =====
