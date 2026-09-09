@@ -147,7 +147,7 @@ const POP_MSGS = {
 let nextPopT = 3;
 
 const RANKS = [
-  {min:2400, t:'מלך המנגל — אולטראס הפועל ובניו גאים בך'},
+  {min:2400, t:'מלך המנגל'},
   {min:1900, t:'אמן הנפנוף 💨'},
   {min:1500, t:'אלוף השכונה'},
   {min:1100, t:'יד לא רעה'},
@@ -269,7 +269,8 @@ let state = 'menu';
 let smk = CFG.smokeStart, elapsed = 0, fans = 0, score = 0, lastFanT = -1, dangerPulse = 0;
 let shake = 0, lastFrame = 0;
 let fanAmp = 0, fanPhase = 0, fanDir = 1, fanSprite = null;
-let embers = [], smoke = [], bursts = [], pops = [];
+let embers = [], smoke = [], bursts = [], pops = [], ripples = [];
+let padPulseL = 0, padPulseR = 0;
 let lastRun = null;
 
 const songTime = () => useAudioEl ? songEl.currentTime : (performance.now()-synthStart)/1000;
@@ -723,6 +724,9 @@ function update(dt){
   step(smoke,dt,p=>{ p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=(1-1.4*dt); p.vy+=(-4)*dt; p.r+=p.grow*dt; p.life-=dt*0.45; });
   step(bursts,dt,p=>{ p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=200*dt; p.life-=dt*1.6; });
   step(pops,dt,p=>{ p.y+=p.vy*dt; p.vy+=30*dt; p.life-=dt*1.2; });
+  step(ripples,dt,r=>{ r.life -= dt*1.8; });
+  padPulseL = Math.max(0, padPulseL - dt*3.5);
+  padPulseR = Math.max(0, padPulseR - dt*3.5);
 
   shake = Math.max(0, shake-dt*30);
   fanAmp *= Math.pow(0.02, dt);
@@ -756,7 +760,63 @@ function render(){
   drawParticles();
   drawSwingTrail(g);
   ctx.restore();
-  if (state==='play') drawMeter();
+  if (state==='play') { drawMeter(); drawPads(); }
+}
+
+// ===== לחצני נפנוף למובייל + פידבק לחיצה (ripples) =====
+function padGeo(){
+  const r = Math.max(46, Math.min(W, H) * 0.09);
+  const y = H - r - 22;
+  return { r, y, xL: W*0.22, xR: W*0.78 };
+}
+function drawPads(){
+  const p = padGeo();
+  drawPad(p.xL, p.y, p.r, -1, padPulseL);
+  drawPad(p.xR, p.y, p.r, +1, padPulseR);
+  // גלים (ripples) — הוכחה חזותית שהמשתמש לחץ
+  for (const r of ripples){
+    const a = Math.max(0, r.life);
+    ctx.beginPath();
+    ctx.arc(r.x, r.y, r.r0 + (1-a)*r.grow, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(255,200,120,${a*0.75})`;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+}
+function drawPad(cx, cy, r, dir, pulse){
+  ctx.save();
+  // הילה חמה סביב הפד כשלוחצים
+  if (pulse > 0.02){
+    const gg = ctx.createRadialGradient(cx, cy, r*0.4, cx, cy, r*(1.6+pulse*0.4));
+    gg.addColorStop(0, `rgba(255,170,80,${pulse*0.55})`);
+    gg.addColorStop(1, 'rgba(255,170,80,0)');
+    ctx.fillStyle = gg;
+    ctx.beginPath(); ctx.arc(cx, cy, r*(1.9+pulse*0.3), 0, Math.PI*2); ctx.fill();
+  }
+  // עיגול הפד עצמו — חצי־שקוף
+  const pg = ctx.createRadialGradient(cx, cy-r*0.3, r*0.15, cx, cy, r);
+  pg.addColorStop(0, `rgba(255,255,255,${0.13+pulse*0.20})`);
+  pg.addColorStop(1, `rgba(255,255,255,${0.04+pulse*0.06})`);
+  ctx.fillStyle = pg;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = `rgba(255,255,255,${0.28+pulse*0.4})`;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // חץ בכיוון הנפנוף
+  ctx.fillStyle = `rgba(255,240,220,${0.80+pulse*0.20})`;
+  ctx.beginPath();
+  const a = r*0.45;
+  if (dir < 0){
+    ctx.moveTo(cx+a*0.35, cy-a);
+    ctx.lineTo(cx-a*0.55, cy);
+    ctx.lineTo(cx+a*0.35, cy+a);
+  } else {
+    ctx.moveTo(cx-a*0.35, cy-a);
+    ctx.lineTo(cx+a*0.55, cy);
+    ctx.lineTo(cx-a*0.35, cy+a);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
 }
 function frame(ts){
   requestAnimationFrame(frame);
@@ -770,7 +830,17 @@ requestAnimationFrame(frame);
 // ===== input =====
 cv.addEventListener('pointerdown', e => {
   if (state!=='play') return;
-  doFan(e.clientX < window.innerWidth/2 ? -1 : 1);
+  const rect = cv.getBoundingClientRect();
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
+  const p = padGeo();
+  const dLx = x - p.xL, dLy = y - p.y;
+  const dRx = x - p.xR, dRy = y - p.y;
+  let dir;
+  if (dLx*dLx + dLy*dLy <= p.r*p.r*1.4){ dir = -1; padPulseL = 1; }
+  else if (dRx*dRx + dRy*dRy <= p.r*p.r*1.4){ dir = 1; padPulseR = 1; }
+  else { dir = x < W/2 ? -1 : 1; if (dir<0) padPulseL = 1; else padPulseR = 1; }
+  ripples.push({ x, y, r0: 14, grow: 110, life: 1 });
+  doFan(dir);
 });
 $('app').addEventListener('touchstart', e => { if (state==='play') e.preventDefault(); }, {passive:false});
 let kbToggle = 1;
@@ -794,6 +864,7 @@ function startGame(){
   initAudio();
   if (actx && actx.state==='suspended') actx.resume();
   smk=CFG.smokeStart; elapsed=0; fans=0; score=0; lastFanT=-1; dangerPulse=0; nextPopT=3;
+  ripples.length=0; padPulseL=0; padPulseR=0;
   shake=0; fanAmp=0; embers=[]; smoke=[]; bursts=[]; pops=[];
   scoreEl.textContent = '0'; fansEl.textContent = 'נפנופים: 0';
 
