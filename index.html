@@ -763,28 +763,14 @@ function render(){
   if (state==='play') { drawMeter(); drawPads(); }
 }
 
-// פידבק לחיצה — גלים בגוון אש (אדום/כתום). בלי עיגולי פד קבועים.
+// פידבק לחיצה — טבעות עדינות בגוון אדום/כתום, מופיעות רק בחצי התחתון
 function drawPads(){
   for (const r of ripples){
     const a = Math.max(0, r.life);
     const rad = r.r0 + (1-a)*r.grow;
-    // הילה חיצונית רכה (זוהר אש)
-    const gg = ctx.createRadialGradient(r.x, r.y, rad*0.4, r.x, r.y, rad*1.15);
-    gg.addColorStop(0, `rgba(255,90,45,${a*0.35})`);
-    gg.addColorStop(0.6, `rgba(216,50,30,${a*0.20})`);
-    gg.addColorStop(1, 'rgba(216,50,30,0)');
-    ctx.fillStyle = gg;
-    ctx.beginPath(); ctx.arc(r.x, r.y, rad*1.15, 0, Math.PI*2); ctx.fill();
-    // טבעת אדומה עבה
     ctx.beginPath();
     ctx.arc(r.x, r.y, rad, 0, Math.PI*2);
-    ctx.strokeStyle = `rgba(255,80,45,${a*0.85})`;
-    ctx.lineWidth = 4;
-    ctx.stroke();
-    // טבעת פנימית כתומה־זהובה
-    ctx.beginPath();
-    ctx.arc(r.x, r.y, rad*0.7, 0, Math.PI*2);
-    ctx.strokeStyle = `rgba(255,170,70,${a*0.6})`;
+    ctx.strokeStyle = `rgba(230,80,55,${a*0.55})`;
     ctx.lineWidth = 2;
     ctx.stroke();
   }
@@ -804,7 +790,8 @@ cv.addEventListener('pointerdown', e => {
   const rect = cv.getBoundingClientRect();
   const x = e.clientX - rect.left, y = e.clientY - rect.top;
   const dir = x < W/2 ? -1 : 1;
-  ripples.push({ x, y, r0: 18, grow: 140, life: 1 });
+  // רק בחלק התחתון של המסך (מתחת לדמות) — הריפל הוא חיווי שלוחצים שם
+  if (y > H*0.60) ripples.push({ x, y, r0: 10, grow: 70, life: 1 });
   doFan(dir);
 });
 $('app').addEventListener('touchstart', e => { if (state==='play') e.preventDefault(); }, {passive:false});
